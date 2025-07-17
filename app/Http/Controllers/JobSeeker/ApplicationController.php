@@ -83,6 +83,6 @@ class ApplicationController extends Controller
 
         $application->delete();
 
-        return $this->success(null, 'Application cancelled successfully', 204);
+        return $this->success(null, 'Application cancelled successfully', 204)
     }
 }
