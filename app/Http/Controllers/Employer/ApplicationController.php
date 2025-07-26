@@ -29,13 +29,13 @@ class ApplicationController extends Controller
                 'success' => true,
                 'message' => 'Vakansiyaga yuborilgan arizalar ro‘yxati',
                 'data' => ApplicationResource::collection($applications)
-            ], Response::HTTP_OK);
+            ]);
         } catch (\Throwable $e) {
             return response()->json([
                 'success' => false,
                 'message' => 'Arizalarni olishda xatolik yuz berdi.',
                 'error' => $e->getMessage()
-            ], Response::HTTP_INTERNAL_SERVER_ERROR);
+            ]);
         }
     }
 
@@ -48,13 +48,13 @@ class ApplicationController extends Controller
                 'success' => true,
                 'message' => 'Ariza tafsilotlari',
                 'data' => new ApplicationResource($application->load(['user', 'vacancy']))
-            ], Response::HTTP_OK);
+            ]);
         } catch (\Throwable $e) {
             return response()->json([
                 'success' => false,
                 'message' => 'Arizani ko‘rishda xatolik yuz berdi.',
                 'error' => $e->getMessage()
-            ], Response::HTTP_INTERNAL_SERVER_ERROR);
+            ]);
         }
     }
 
@@ -71,13 +71,13 @@ class ApplicationController extends Controller
                 'success' => true,
                 'message' => 'Ariza holati yangilandi',
                 'data' => new ApplicationResource($application)
-            ], Response::HTTP_OK);
+            ]);
         } catch (\Throwable $e) {
             return response()->json([
                 'success' => false,
                 'message' => 'Statusni yangilashda xatolik yuz berdi.',
                 'error' => $e->getMessage()
-            ], Response::HTTP_INTERNAL_SERVER_ERROR);
+            ]);
         }
     }
 
@@ -90,7 +90,7 @@ class ApplicationController extends Controller
                 return response()->json([
                     'success' => false,
                     'message' => 'CV fayli topilmadi.'
-                ], Response::HTTP_NOT_FOUND);
+                ]);
             }
 
             return Storage::download($application->resume_file);
@@ -99,7 +99,7 @@ class ApplicationController extends Controller
                 'success' => false,
                 'message' => 'CV faylini yuklashda xatolik.',
                 'error' => $e->getMessage()
-            ], Response::HTTP_INTERNAL_SERVER_ERROR);
+            ]);
         }
     }
 }

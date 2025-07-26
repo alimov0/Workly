@@ -44,7 +44,7 @@ class ApplicationController extends Controller
                 'success' => false,
                 'message' => __('Failed to load applications'),
                 'errors'  => ['exception' => $e->getMessage()]
-            ], Response::HTTP_INTERNAL_SERVER_ERROR);
+            ]);
         }
     }
 }

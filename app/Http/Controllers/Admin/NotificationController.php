@@ -10,10 +10,6 @@ use Exception;
 
 class NotificationController extends Controller
 {
-
-    /**
-     * Faqat tanlangan yoki barcha xabarlarni o'qilgan deb belgilash
-     */
     public function markAsRead(MarkNotificationAsReadRequest $request): JsonResponse
     {
         try {

@@ -2,14 +2,15 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
-use App\Http\Requests\Auth\LoginRequest;
-use App\Http\Requests\Auth\RegisterRequest;
 use App\Models\User;
-use Illuminate\Auth\Events\Registered;
+use Illuminate\Http\Request;
+use App\Events\UserRegistered;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Auth\Events\Registered;
+use App\Http\Requests\Auth\LoginRequest;
+use App\Http\Requests\Auth\RegisterRequest;
 
 class AuthController extends Controller
 {
@@ -25,8 +26,8 @@ class AuthController extends Controller
     ]);
 
     // Email tasdiqlash uchun event yuboriladi
-    event(new Registered($user));
-
+   // event(new Registered($user));
+    event(new UserRegistered($user));
     // Sanctum token yaratish
     $token = $user->createToken('auth_token')->plainTextToken;
 
