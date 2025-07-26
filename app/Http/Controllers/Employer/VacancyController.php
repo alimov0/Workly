@@ -8,85 +8,139 @@ use App\Http\Resources\Employer\VacancyResource;
 use App\Http\Resources\Employer\ApplicationResource;
 use App\Models\Vacancy;
 use Illuminate\Http\Request;
-use App\Traits\HttpResponses;
 use Illuminate\Support\Facades\Auth;
 
 class VacancyController extends Controller
 {
-    use HttpResponses;
-
-    public function __construct()
-    {
-        $this->middleware(['auth:sanctum', 'employer']);
-    }
     public function index(Request $request)
     {
-        $vacancies = $request->user()
-            ->vacancies()
-            ->with(['category', 'applications'])
-            ->latest()
-            ->paginate($request->per_page ?? 10);
+        try {
+            $vacancies = $request->user()
+                ->vacancies()
+                ->with(['category', 'applications'])
+                ->latest()
+                ->paginate($request->per_page ?? 10);
 
-        return $this->success(
-            VacancyResource::collection($vacancies),
-            'Vacancies retrieved successfully'
-        );
+            return response()->json([
+                'success' => true,
+                'message' => 'Vakansiyalar ro‘yxati olindi',
+                'data' => VacancyResource::collection($vacancies),
+            ]);
+        } catch (\Throwable $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Vakansiyalarni olishda xatolik yuz berdi.',
+                'error' => $e->getMessage(),
+            ]);
+        }
     }
+
     public function store(VacancyRequest $request)
     {
-        $vacancy = $request->user()
-            ->vacancies()
-            ->create($request->validated());
+        try {
+            $vacancy = $request->user()
+                ->vacancies()
+                ->create($request->validated());
 
-        return $this->success(
-            new VacancyResource($vacancy->load('category')),
-            'Vacancy created successfully',
-            201
-        );
+            return response()->json([
+                'success' => true,
+                'message' => 'Vakansiya muvaffaqiyatli yaratildi',
+                'data' => new VacancyResource($vacancy->load('category')),
+            ], 201);
+        } catch (\Throwable $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Vakansiyani yaratishda xatolik yuz berdi.',
+                'error' => $e->getMessage(),
+            ]);
+        }
     }
 
     public function update(VacancyRequest $request, Vacancy $vacancy)
     {
-        $this->authorize('update', $vacancy);
+        try {
+            $this->authorize('update', $vacancy);
 
-        $vacancy->update($request->validated());
+            $vacancy->update($request->validated());
 
-        return $this->success(
-            new VacancyResource($vacancy->load('category')),
-            'Vacancy updated successfully'
-        );
+            return response()->json([
+                'success' => true,
+                'message' => 'Vakansiya yangilandi',
+                'data' => new VacancyResource($vacancy->load('category')),
+            ]);
+        } catch (\Throwable $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Vakansiyani yangilashda xatolik yuz berdi.',
+                'error' => $e->getMessage(),
+            ]);
+        }
     }
+
     public function destroy(Vacancy $vacancy)
     {
-        $this->authorize('delete', $vacancy);
+        try {
+            $this->authorize('delete', $vacancy);
 
-        $vacancy->delete();
+            $vacancy->delete();
 
-        return $this->success(null, 'Vacancy deleted successfully', 204);
+            return response()->json([
+                'success' => true,
+                'message' => 'Vakansiya o‘chirildi',
+            ], 204);
+        } catch (\Throwable $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Vakansiyani o‘chirishda xatolik yuz berdi.',
+                'error' => $e->getMessage(),
+            ]);
+        }
     }
+
     public function applications(Vacancy $vacancy)
     {
-        $this->authorize('view', $vacancy);
+        try {
+            $this->authorize('view', $vacancy);
 
-        $applications = $vacancy->applications()
-            ->with('user')
-            ->latest()
-            ->paginate();
+            $applications = $vacancy->applications()
+                ->with('user')
+                ->latest()
+                ->paginate();
 
-        return $this->success(
-            ApplicationResource::collection($applications),
-            'Applications retrieved successfully'
-        );
+            return response()->json([
+                'success' => true,
+                'message' => 'Arizalar ro‘yxati',
+                'data' => ApplicationResource::collection($applications),
+            ]);
+        } catch (\Throwable $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Arizalarni olishda xatolik yuz berdi.',
+                'error' => $e->getMessage(),
+            ]);
+        }
     }
 
     public function toggleStatus(Vacancy $vacancy)
     {
-        $this->authorize('update', $vacancy);
+        try {
+            $this->authorize('update', $vacancy);
 
-        $vacancy->update(['is_active' => !$vacancy->is_active]);
+            $vacancy->update([
+                'is_active' => !$vacancy->is_active
+            ]);
 
-        return $this->success([
-            'is_active' => $vacancy->is_active
-        ], 'Vacancy status updated');
+            return response()->json([
+                'success' => true,
+                'message' => 'Vakansiya holati yangilandi',
+                'data' => ['is_active' => $vacancy->is_active],
+            ]);
+        } catch (\Throwable $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Holatni o‘zgartirishda xatolik yuz berdi.',
+                'error' => $e->getMessage(),
+            ]);
+        }
     }
 }

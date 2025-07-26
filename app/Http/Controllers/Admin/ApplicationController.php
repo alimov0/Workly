@@ -7,35 +7,44 @@ use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\Admin\ApplicationResource;
 use Symfony\Component\HttpFoundation\Response;
+use Exception;
 
 class ApplicationController extends Controller
 {
-    public function __construct()
-    {
-        $this->middleware(['auth:sanctum']);
-    }
-
+    /**
+     * Admin – Barcha arizalarni ko‘rish
+     */
     public function index(Request $request)
     {
-        $query = Application::with(['user', 'vacancy']);
+        try {
+            $query = Application::with(['user', 'vacancy']);
 
-        if ($request->has('status')) {
-            $query->where('status', $request->status);
+            if ($request->has('status')) {
+                $query->where('status', $request->status);
+            }
+
+            if ($request->has('user_id')) {
+                $query->where('user_id', $request->user_id);
+            }
+
+            if ($request->has('vacancy_id')) {
+                $query->where('vacancy_id', $request->vacancy_id);
+            }
+
+            $applications = $query->paginate($request->per_page ?? 15);
+
+            return response()->json([
+                'success' => true,
+                'message' => __('Applications retrieved successfully'),
+                'data'    => ApplicationResource::collection($applications)
+            ], Response::HTTP_OK);
+
+        } catch (Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => __('Failed to load applications'),
+                'errors'  => ['exception' => $e->getMessage()]
+            ], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
-
-        if ($request->has('user_id')) {
-            $query->where('user_id', $request->user_id);
-        }
-
-        if ($request->has('vacancy_id')) {
-            $query->where('vacancy_id', $request->vacancy_id);
-        }
-
-        return response()->json([
-            'message' => __('Applications retrieved successfully'),
-            'data' => ApplicationResource::collection(
-                $query->paginate($request->per_page ?? 15)
-            )
-        ], Response::HTTP_OK);
     }
 }
