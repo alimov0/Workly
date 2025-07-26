@@ -94,31 +94,3 @@ php artisan key:generate
 php artisan migrate --seed
 php artisan storage:link
 php artisan queue:work
-
-
-# Workly API
-
-This is a Laravel 12 RESTful API project for job vacancy management, built using Service-Repository architecture with advanced response handling and admin/user authentication.
-
-## Features
-
-- Sanctum-based authentication
-- Admin and Employer roles
-- Advanced response formats 
-- Notifications system
-- Vacancy management
-- Category CRUD
-- Validation via Form Requests
-
-## About Laravel
-
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
-
-- Simple, fast routing engine
-- Powerful dependency injection container
-- Multiple backends for session and cache storage
-- Expressive database abstraction layer
-- Robust background job processing
-- Real-time event broadcasting
-
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
