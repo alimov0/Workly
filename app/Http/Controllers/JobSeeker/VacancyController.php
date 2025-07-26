@@ -43,15 +43,15 @@ class VacancyController extends Controller
             $vacancies = $query->paginate($request->get('per_page', 15));
 
             return response()->json([
-                'success' => true,
+                'status' => 'success',
                 'message' => 'Vakansiyalar muvaffaqiyatli olindi.',
                 'data' => VacancyResource::collection($vacancies)
             ]);
         } catch (\Throwable $e) {
             return response()->json([
-                'success' => false,
+                'status' => 'error',
                 'message' => 'Vakansiyalarni olishda xatolik yuz berdi.',
-                'error' => $e->getMessage()
+        
             ], 500);
         }
     }
@@ -66,21 +66,20 @@ class VacancyController extends Controller
 
             if (!$vacancy) {
                 return response()->json([
-                    'success' => false,
+                    'status' => 'success',
                     'message' => 'Vakansiya topilmadi.'
                 ], 404);
             }
 
             return response()->json([
-                'success' => true,
+                'status' => 'success',
                 'message' => 'Vakansiya maʼlumotlari muvaffaqiyatli olindi.',
                 'data' => new VacancyResource($vacancy)
             ]);
         } catch (\Throwable $e) {
             return response()->json([
-                'success' => false,
+                'status' => 'error',
                 'message' => 'Vakansiyani ko‘rishda xatolik yuz berdi.',
-                'error' => $e->getMessage()
             ], 500);
         }
     }
@@ -94,7 +93,7 @@ class VacancyController extends Controller
 
             if (!$vacancy) {
                 return response()->json([
-                    'success' => false,
+                    'status' => 'error',
                     'message' => 'Vakansiya topilmadi.'
                 ], 404);
             }
@@ -106,15 +105,15 @@ class VacancyController extends Controller
             ]);
 
             return response()->json([
-                'success' => true,
+                'status' => 'success',
                 'message' => 'Ariza muvaffaqiyatli yuborildi.',
                 'data' => $application
             ], 201);
         } catch (\Throwable $e) {
             return response()->json([
-                'success' => false,
+                'status' => 'error',
                 'message' => 'Ariza yuborishda xatolik yuz berdi.',
-                'error' => $e->getMessage()
+            
             ], 500);
         }
     }

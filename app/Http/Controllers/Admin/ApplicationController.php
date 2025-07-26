@@ -34,16 +34,16 @@ class ApplicationController extends Controller
             $applications = $query->paginate($request->per_page ?? 15);
 
             return response()->json([
-                'success' => true,
+                'status' => 'success',
                 'message' => __('Applications retrieved successfully'),
                 'data'    => ApplicationResource::collection($applications)
-            ], Response::HTTP_OK);
+            ]);
 
         } catch (Exception $e) {
             return response()->json([
-                'success' => false,
+                'status' => 'error',
                 'message' => __('Failed to load applications'),
-                'errors'  => ['exception' => $e->getMessage()]
+                
             ]);
         }
     }

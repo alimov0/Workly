@@ -22,15 +22,15 @@ class VacancyController extends Controller
                 ->paginate($request->per_page ?? 10);
 
             return response()->json([
-                'success' => true,
+                'status' => 'success',
                 'message' => 'Vakansiyalar ro‘yxati olindi',
                 'data' => VacancyResource::collection($vacancies),
             ]);
         } catch (\Throwable $e) {
             return response()->json([
-                'success' => false,
+                'status' => 'error',
                 'message' => 'Vakansiyalarni olishda xatolik yuz berdi.',
-                'error' => $e->getMessage(),
+
             ]);
         }
     }
@@ -43,15 +43,15 @@ class VacancyController extends Controller
                 ->create($request->validated());
 
             return response()->json([
-                'success' => true,
+                'status' => 'success',
                 'message' => 'Vakansiya muvaffaqiyatli yaratildi',
                 'data' => new VacancyResource($vacancy->load('category')),
             ], 201);
         } catch (\Throwable $e) {
             return response()->json([
-                'success' => false,
+                'status' => 'error',
                 'message' => 'Vakansiyani yaratishda xatolik yuz berdi.',
-                'error' => $e->getMessage(),
+    
             ]);
         }
     }
@@ -64,15 +64,14 @@ class VacancyController extends Controller
             $vacancy->update($request->validated());
 
             return response()->json([
-                'success' => true,
+                'status' => 'success',
                 'message' => 'Vakansiya yangilandi',
                 'data' => new VacancyResource($vacancy->load('category')),
             ]);
         } catch (\Throwable $e) {
             return response()->json([
-                'success' => false,
+                'status' => 'error',
                 'message' => 'Vakansiyani yangilashda xatolik yuz berdi.',
-                'error' => $e->getMessage(),
             ]);
         }
     }
@@ -85,14 +84,13 @@ class VacancyController extends Controller
             $vacancy->delete();
 
             return response()->json([
-                'success' => true,
+                'status' => 'error',
                 'message' => 'Vakansiya o‘chirildi',
             ], 204);
         } catch (\Throwable $e) {
             return response()->json([
-                'success' => false,
+                'status' => 'error',
                 'message' => 'Vakansiyani o‘chirishda xatolik yuz berdi.',
-                'error' => $e->getMessage(),
             ]);
         }
     }
@@ -108,15 +106,15 @@ class VacancyController extends Controller
                 ->paginate();
 
             return response()->json([
-                'success' => true,
+                'status' => 'success',
                 'message' => 'Arizalar ro‘yxati',
                 'data' => ApplicationResource::collection($applications),
             ]);
         } catch (\Throwable $e) {
             return response()->json([
-                'success' => false,
+                'status' => 'error',
                 'message' => 'Arizalarni olishda xatolik yuz berdi.',
-                'error' => $e->getMessage(),
+            
             ]);
         }
     }
@@ -131,15 +129,14 @@ class VacancyController extends Controller
             ]);
 
             return response()->json([
-                'success' => true,
+                'status' => 'success',
                 'message' => 'Vakansiya holati yangilandi',
                 'data' => ['is_active' => $vacancy->is_active],
             ]);
         } catch (\Throwable $e) {
             return response()->json([
-                'success' => false,
+                'status' => 'error',
                 'message' => 'Holatni o‘zgartirishda xatolik yuz berdi.',
-                'error' => $e->getMessage(),
             ]);
         }
     }

@@ -26,15 +26,15 @@ class ApplicationController extends Controller
                 ->get();
 
             return response()->json([
-                'success' => true,
+                'status' => 'success',
                 'message' => 'Vakansiyaga yuborilgan arizalar ro‘yxati',
                 'data' => ApplicationResource::collection($applications)
             ]);
         } catch (\Throwable $e) {
             return response()->json([
-                'success' => false,
+                'status' => 'error',
                 'message' => 'Arizalarni olishda xatolik yuz berdi.',
-                'error' => $e->getMessage()
+                
             ]);
         }
     }
@@ -45,15 +45,15 @@ class ApplicationController extends Controller
             $this->authorize('view', $application->vacancy);
 
             return response()->json([
-                'success' => true,
+                'status' => 'success',
                 'message' => 'Ariza tafsilotlari',
                 'data' => new ApplicationResource($application->load(['user', 'vacancy']))
             ]);
         } catch (\Throwable $e) {
             return response()->json([
-                'success' => false,
+                'status' => 'error',
                 'message' => 'Arizani ko‘rishda xatolik yuz berdi.',
-                'error' => $e->getMessage()
+        
             ]);
         }
     }
@@ -68,15 +68,15 @@ class ApplicationController extends Controller
             ]);
 
             return response()->json([
-                'success' => true,
+                'status' => 'success',
                 'message' => 'Ariza holati yangilandi',
                 'data' => new ApplicationResource($application)
             ]);
         } catch (\Throwable $e) {
             return response()->json([
-                'success' => false,
+                'status' => 'error',
                 'message' => 'Statusni yangilashda xatolik yuz berdi.',
-                'error' => $e->getMessage()
+            
             ]);
         }
     }
@@ -88,7 +88,7 @@ class ApplicationController extends Controller
 
             if (!Storage::disk('public')->exists($application->resume_file)) {
                 return response()->json([
-                    'success' => false,
+                    'status' => 'error',
                     'message' => 'CV fayli topilmadi.'
                 ]);
             }
@@ -96,9 +96,8 @@ class ApplicationController extends Controller
             return Storage::download($application->resume_file);
         } catch (\Throwable $e) {
             return response()->json([
-                'success' => false,
+                'status' => 'error',
                 'message' => 'CV faylini yuklashda xatolik.',
-                'error' => $e->getMessage()
             ]);
         }
     }

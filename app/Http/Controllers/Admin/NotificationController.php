@@ -19,7 +19,7 @@ class NotificationController extends Controller
                 $user->unreadNotifications->markAsRead();
 
                 return response()->json([
-                    'success' => true,
+                    'status' => 'error',
                     'message' => __('All notifications marked as read'),
                 ]);
             }
@@ -30,20 +30,19 @@ class NotificationController extends Controller
                     ->update(['read_at' => now()]);
 
                 return response()->json([
-                    'success' => true,
+                    'status' => 'error',
                     'message' => __(':count notifications marked as read', ['count' => $count]),
                 ]);
             }
 
             return response()->json([
-                'success' => false,
+                'status' => 'error',
                 'message' => __('No notification IDs or "all" parameter provided'),
             ], 422);
         } catch (Exception $e) {
             return response()->json([
-                'success' => false,
+                'status' => 'error',
                 'message' => __('Something went wrong'),
-                'error' => $e->getMessage(),
             ], 500);
         }
     }

@@ -26,15 +26,15 @@ class ApplicationController extends Controller
                 ->paginate();
 
             return response()->json([
-                'success' => true,
+                'status' => 'success',
                 'message' => 'Arizalar muvaffaqiyatli olindi',
                 'data' => ApplicationResource::collection($applications)
             ]);
         } catch (\Throwable $e) {
             return response()->json([
-                'success' => false,
+                'status' => 'error',
                 'message' => 'Arizalarni olishda xatolik yuz berdi',
-                'error' => $e->getMessage()
+
             ]);
         }
     }
@@ -47,14 +47,14 @@ class ApplicationController extends Controller
         try {
             if (!$vacancy->is_active || $vacancy->deadline < now()) {
                 return response()->json([
-                    'success' => false,
+                    'status' => 'error',
                     'message' => 'Bu vakansiyaga ariza topshirib bo‘lmaydi'
                 ], 400);
             }
 
             if ($request->user()->applications()->where('vacancy_id', $vacancy->id)->exists()) {
                 return response()->json([
-                    'success' => false,
+                 'status' => 'error',
                     'message' => 'Siz bu vakansiyaga allaqachon ariza topshirgansiz'
                 ], 400);
             }
@@ -71,15 +71,15 @@ class ApplicationController extends Controller
             SendApplicationEmail::dispatch($application);
 
             return response()->json([
-                'success' => true,
+                'status' => 'success',
                 'message' => 'Ariza muvaffaqiyatli yuborildi',
                 'data' => new ApplicationResource($application->load(['vacancy']))
             ], 201);
         } catch (\Throwable $e) {
             return response()->json([
-                'success' => false,
+                'status' => 'error',
                 'message' => 'Ariza yuborishda xatolik yuz berdi',
-                'error' => $e->getMessage()
+
             ]);
         }
     }
@@ -99,14 +99,13 @@ class ApplicationController extends Controller
             $application->delete();
 
             return response()->json([
-                'success' => true,
+                'status' => 'error',
                 'message' => 'Ariza bekor qilindi'
             ], 204);
         } catch (\Throwable $e) {
             return response()->json([
-                'success' => false,
+                'status' => 'error',
                 'message' => 'Arizani o‘chirishda xatolik yuz berdi',
-                'error' => $e->getMessage()
             ]);
         }
     }

@@ -42,15 +42,14 @@ class UserController extends Controller
             $users = $query->paginate($request->input('per_page', 15));
 
             return response()->json([
-                'success' => true,
+                'status' => 'success',
                 'message' => 'Foydalanuvchilar ro‘yxati',
                 'data'    => UserResource::collection($users)
             ]);
         } catch (Throwable $e) {
             return response()->json([
-                'success' => false,
+                'status' => 'error',
                 'message' => 'Foydalanuvchilarni yuklashda xatolik',
-                'error'   => config('app.debug') ? $e->getMessage() : null,
             ], 500);
         }
     }
@@ -65,15 +64,14 @@ class UserController extends Controller
             $user = User::create($data);
 
             return response()->json([
-                'success' => true,
+                'status' => 'success',
                 'message' => 'Foydalanuvchi yaratildi',
                 'data'    => new UserResource($user)
             ], 201);
         } catch (Throwable $e) {
             return response()->json([
-                'success' => false,
+                'status' => 'error',
                 'message' => 'Foydalanuvchini yaratishda xatolik',
-                'error'   => config('app.debug') ? $e->getMessage() : null,
             ], 500);
         }
     }
@@ -82,15 +80,14 @@ class UserController extends Controller
     {
         try {
             return response()->json([
-                'success' => true,
+                'status' => 'success',
                 'message' => 'Foydalanuvchi maʼlumotlari',
                 'data'    => new UserResource($user)
             ]);
         } catch (Throwable $e) {
             return response()->json([
-                'success' => false,
+                'status' => 'error',
                 'message' => 'Foydalanuvchini yuklashda xatolik',
-                'error'   => config('app.debug') ? $e->getMessage() : null,
             ], 500);
         }
     }
@@ -107,15 +104,14 @@ class UserController extends Controller
             $user->update($data);
 
             return response()->json([
-                'success' => true,
+                'status' => 'success',
                 'message' => 'Foydalanuvchi yangilandi',
                 'data'    => new UserResource($user)
             ]);
         } catch (Throwable $e) {
             return response()->json([
-                'success' => false,
+                'status' => 'error',
                 'message' => 'Foydalanuvchini yangilashda xatolik',
-                'error'   => config('app.debug') ? $e->getMessage() : null,
             ], 500);
         }
     }
@@ -126,15 +122,14 @@ class UserController extends Controller
             $user->delete();
 
             return response()->json([
-                'success' => true,
+                'status' => 'success',
                 'message' => 'Foydalanuvchi o‘chirildi',
                 'data'    => null
             ], 204);
         } catch (Throwable $e) {
             return response()->json([
-                'success' => false,
+                'status' => 'error', 
                 'message' => 'Foydalanuvchini o‘chirishda xatolik',
-                'error'   => config('app.debug') ? $e->getMessage() : null,
             ], 500);
         }
     }
