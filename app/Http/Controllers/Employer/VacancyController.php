@@ -8,17 +8,17 @@ use App\Http\Resources\Employer\VacancyResource;
 use App\Http\Resources\Employer\ApplicationResource;
 use App\Models\Vacancy;
 use Illuminate\Http\Request;
+use App\Traits\HttpResponses;
+use Illuminate\Support\Facades\Auth;
 
 class VacancyController extends Controller
 {
+    use HttpResponses;
+
     public function __construct()
     {
         $this->middleware(['auth:sanctum', 'employer']);
     }
-
-    /**
-     * Employerning barcha vakansiyalarini qaytarish
-     */
     public function index(Request $request)
     {
         $vacancies = $request->user()
@@ -27,81 +27,65 @@ class VacancyController extends Controller
             ->latest()
             ->paginate($request->per_page ?? 10);
 
-        return $this->responseSuccess(
+        return $this->success(
             VacancyResource::collection($vacancies),
             'Vacancies retrieved successfully'
         );
     }
-
-    /**
-     * Yangi vakansiya yaratish
-     */
     public function store(VacancyRequest $request)
     {
-        $vacancy = $request->user()->vacancies()->create($request->validated());
+        $vacancy = $request->user()
+            ->vacancies()
+            ->create($request->validated());
 
-        return $this->responseSuccess(
-            new VacancyResource($vacancy->load(['category'])),
+        return $this->success(
+            new VacancyResource($vacancy->load('category')),
             'Vacancy created successfully',
             201
         );
     }
 
-    /**
-     * Vakansiyani yangilash
-     */
     public function update(VacancyRequest $request, Vacancy $vacancy)
     {
         $this->authorize('update', $vacancy);
 
         $vacancy->update($request->validated());
 
-        return $this->responseSuccess(
-            new VacancyResource($vacancy->load(['category'])),
+        return $this->success(
+            new VacancyResource($vacancy->load('category')),
             'Vacancy updated successfully'
         );
     }
-
-    /**
-     * Vakansiyani o'chirish
-     */
     public function destroy(Vacancy $vacancy)
     {
         $this->authorize('delete', $vacancy);
 
         $vacancy->delete();
 
-        return $this->responseSuccess(null, 'Vacancy deleted successfully', 204);
+        return $this->success(null, 'Vacancy deleted successfully', 204);
     }
-
-    /**
-     * Vakansiyaga yuborilgan arizalarni ko'rish
-     */
     public function applications(Vacancy $vacancy)
     {
         $this->authorize('view', $vacancy);
 
         $applications = $vacancy->applications()
-            ->with(['user'])
+            ->with('user')
             ->latest()
             ->paginate();
 
-        return $this->responseSuccess(
+        return $this->success(
             ApplicationResource::collection($applications),
             'Applications retrieved successfully'
         );
     }
 
-    /**
-     * Vakansiya holatini (faol/passiv) almashtirish
-     */
     public function toggleStatus(Vacancy $vacancy)
     {
         $this->authorize('update', $vacancy);
 
         $vacancy->update(['is_active' => !$vacancy->is_active]);
 
-        return $this->responseSuccess([
+        return $this->success([
             'is_active' => $vacancy->is_active
         ], 'Vacancy status updated');
     }

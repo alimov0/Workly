@@ -29,19 +29,19 @@ public function vacancy()
 {
     return $this->belongsTo(vacancy::class);
 }
-public function isPending()
-{
-    return $this->status === 'pending';
-}
+//public function isPending()
+//{
+    //return $this->status === 'pending';
+//}
 
-public function isAccepted()
-{
-    return $this->status === 'accepted';
-}
-public function isRejected()
-{
-    return $this->status === 'rejected';
-}
+//public function isAccepted()
+//{
+//    return $this->status === 'accepted';
+//}
+//public function isRejected()
+//{
+  //  return $this->status === 'rejected';
+//}
 
 
 

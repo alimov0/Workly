@@ -8,31 +8,24 @@ use App\Http\Controllers\Auth\VerificationController;
 
 use App\Http\Controllers\VacancyController;
 
-// Job Seeker
-use App\Http\Controllers\ApplicationController as JobSeekerApplicationController;
-use App\Http\Controllers\JobSeeker\VacancyController as JobSeekerVacancyController;
-
-// Employer
-use App\Http\Controllers\Employer\VacancyController as EmployerVacancyController;
-use App\Http\Controllers\Employer\ApplicationController as EmployerApplicationController;
-
-// Admin
 use App\Http\Controllers\Admin\UserController as AdminUserController;
 use App\Http\Controllers\Admin\VacancyController as AdminVacancyController;
 use App\Http\Controllers\Admin\CategoryController as AdminCategoryController;
 use App\Http\Controllers\Admin\ApplicationController as AdminApplicationController;
 use App\Http\Controllers\Admin\NotificationController as AdminNotificationController;
 
-// Get current user
-Route::get('/user', function (Request $request) {
-    return $request->user();
-})->middleware('auth:sanctum');
+use App\Http\Controllers\Employer\VacancyController as EmployerVacancyController;
+use App\Http\Controllers\Employer\ApplicationController as EmployerApplicationController;
 
-// Auth: register & login
-Route::post('/register', [AuthController::class, 'register']);
-Route::post('/login', [AuthController::class, 'login']);
+use App\Http\Controllers\JobSeeker\VacancyController as JobSeekerVacancyController;
+use App\Http\Controllers\JobSeeker\ApplicationController as JobSeekerApplicationController;
 
-// Email verification
+Route::prefix('auth')->group(function () {
+    Route::post('/register', [AuthController::class, 'register']);
+    Route::post('/login', [AuthController::class, 'login']);
+    Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth:sanctum');
+});
+
 Route::get('/email/verify/{id}/{hash}', [VerificationController::class, 'verify'])
     ->middleware(['signed'])
     ->name('verification.verify');
@@ -40,49 +33,42 @@ Route::get('/email/verify/{id}/{hash}', [VerificationController::class, 'verify'
 Route::post('/email/verification-notification', [VerificationController::class, 'sendVerificationEmail'])
     ->middleware(['auth:sanctum', 'throttle:6,1']);
 
-// Public vacancies
 Route::get('/vacancies', [VacancyController::class, 'index']);
 Route::get('/vacancies/{vacancy:slug}', [VacancyController::class, 'show']);
 
-
-
-/// ✅ AUTHENTICATED ROUTES (verified users)
 Route::middleware(['auth:sanctum', 'verified'])->group(function () {
 
-    // Logout
-    Route::post('/logout', [AuthController::class, 'logout']);
+    Route::get('/user', function (Request $request) {
+        return $request->user();
+    });
 
-    /// 👨‍💼 Job Seeker routes
-    Route::prefix('job-seeker')->group(function () {
+    Route::middleware('jobseeker')->prefix('jobseeker')->group(function () {
         Route::get('/vacancies', [JobSeekerVacancyController::class, 'index']);
-        Route::get('/vacancies/{vacancy}', [JobSeekerVacancyController::class, 'show']);
+        Route::get('/vacancies/{slug}', [JobSeekerVacancyController::class, 'show']);
+        Route::post('/vacancies/{id}/apply', [JobSeekerVacancyController::class, 'apply']);
 
         Route::get('/applications', [JobSeekerApplicationController::class, 'index']);
-        Route::post('/vacancies/{vacancy}/apply', [JobSeekerApplicationController::class, 'store']);
-        Route::delete('/applications/{application}', [JobSeekerApplicationController::class, 'destroy']);
+        Route::delete('/applications/{id}', [JobSeekerApplicationController::class, 'destroy']);
     });
 
-    /// 🧑‍💼 Employer routes
-    Route::prefix('employer')->middleware('employer')->group(function () {
-        // Vacancies
-        Route::apiResource('vacancies', EmployerVacancyController::class)->except(['show']);
-        Route::post('vacancies/{vacancy}/toggle-status', [EmployerVacancyController::class, 'toggleStatus']);
-        Route::get('vacancies/{vacancy}/applications', [EmployerVacancyController::class, 'applications']);
+    Route::middleware('employer')->prefix('employer')->group(function () {
+        Route::get('/vacancy', [EmployerVacancyController::class, 'index']);
+        Route::post('/vacancy', [EmployerVacancyController::class, 'store']);
+        Route::put('/vacancy/{id}', [EmployerVacancyController::class, 'update']);
+        Route::delete('/vacancy/{id}', [EmployerVacancyController::class, 'destroy']);
 
-        // Applications
-        Route::get('applications/{application}', [EmployerApplicationController::class, 'show']);
-        Route::put('applications/{application}/status', [EmployerApplicationController::class, 'updateStatus']);
-        Route::get('applications/{application}/download', [EmployerApplicationController::class, 'download']);
+        Route::get('/vacancy/{id}/applications', [EmployerVacancyController::class, 'applications']);
+
+        Route::get('/applications/{application}', [EmployerApplicationController::class, 'show']);
+        Route::put('/applications/{application}/status', [EmployerApplicationController::class, 'updateStatus']);
+        Route::get('/applications/{application}/download', [EmployerApplicationController::class, 'download']);
     });
 
-    /// 🛠️ Admin routes
-    Route::prefix('admin')->middleware('admin')->group(function () {
-        // CRUD
+    Route::middleware('admin')->prefix('admin')->group(function () {
         Route::apiResource('users', AdminUserController::class);
-        Route::apiResource('vacancies', AdminVacancyController::class);
+        Route::apiResource('vacancy', AdminVacancyController::class);
         Route::apiResource('categories', AdminCategoryController::class);
 
-        // Others
         Route::get('/applications', [AdminApplicationController::class, 'index']);
         Route::post('/notifications/read', [AdminNotificationController::class, 'markAsRead']);
     });

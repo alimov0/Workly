@@ -1,10 +1,11 @@
 <?php
 
 namespace App\Models;
-
-use Illuminate\Contracts\Auth\MustVerifyEmail;
+use  App\Models\Application;
+use App\Models\Vacancy;
 use Laravel\Sanctum\HasApiTokens;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 
@@ -41,20 +42,20 @@ class User extends Authenticatable  implements MustVerifyEmail
      {
         return $this->hasMany(Applications::class);
      }
-     public function isEmployer()
-     {
-        return $this->role ==='employer';
-     }
+    // public function isEmployer()
+    // {
+    //    return $this->role ==='employer';
+    // }
 
-     public function isjobSeeker()
-     {
-        return $this->role === 'user';
-     }
+    // public function isjobSeeker()
+    // {
+    //    return $this->role === 'user';
+   //  }
 
-      public function sendEmailVerificationNotification()
-      {
-        $this->notify(new VerifyEmailNotification);
-      }
+    //  public function sendEmailVerificationNotification()
+    //  {
+    //    $this->notify(new VerifyEmailNotification);
+    //  }
 
 
 

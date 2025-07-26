@@ -67,15 +67,15 @@ class Vacancy extends Model
         return $this->hasMany(Application::class);
       }
 
-      public function getIsExpiredAttribute()
-      {
-          return $this->deadline->isPast();
-      }
+    //  public function getIsExpiredAttribute()
+    //  {
+    //      return $this->deadline->isPast();
+    //  }
   
-      public function getAverageSalaryAttribute()
-      {
-          return ($this->salary_from + $this->salary_to) / 2;
-      }
+     // public function getAverageSalaryAttribute()
+    //  {
+    //      return ($this->salary_from + $this->salary_to) / 2;
+    //  }
   }
 
 

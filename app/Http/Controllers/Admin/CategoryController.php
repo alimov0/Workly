@@ -15,34 +15,34 @@ class CategoryController extends Controller
     {
         $this->middleware(['auth:sanctum', 'admin']);
     }
-
     public function index(Request $request)
     {
         $query = Category::with(['parent', 'children']);
 
         if ($request->has('search')) {
-            $query->where('title', 'like', '%'.$request->search.'%');
+            $query->where('title', 'like', '%' . $request->search . '%');
         }
 
         if ($request->has('parent_id')) {
             $query->where('parent_id', $request->parent_id);
         }
 
+        $categories = $query->paginate($request->per_page ?? 15);
+
         return response()->json([
             'message' => __('Categories retrieved successfully'),
-            'data' => CategoryResource::collection($query->paginate($request->per_page ?? 15)),
+            'data' => CategoryResource::collection($categories),
         ]);
     }
-
     public function store(CategoryStoreRequest $request)
     {
         $category = Category::create($request->validated());
+
         return response()->json([
             'message' => __('Category created successfully'),
             'data' => new CategoryResource($category->load(['parent', 'children']))
         ], 201);
     }
-
     public function show(Category $category)
     {
         return response()->json([
@@ -50,10 +50,10 @@ class CategoryController extends Controller
             'data' => new CategoryResource($category->load(['parent', 'children']))
         ]);
     }
-
     public function update(CategoryUpdateRequest $request, Category $category)
     {
         $category->update($request->validated());
+
         return response()->json([
             'message' => __('Category updated successfully'),
             'data' => new CategoryResource($category->load(['parent', 'children']))
@@ -62,6 +62,7 @@ class CategoryController extends Controller
 
     public function destroy(Category $category)
     {
+        
         if ($category->vacancies()->exists()) {
             return response()->json([
                 'message' => __('Cannot delete category with active vacancies')
@@ -69,6 +70,7 @@ class CategoryController extends Controller
         }
 
         $category->delete();
+
         return response()->json([
             'message' => __('Category deleted successfully')
         ], 204);

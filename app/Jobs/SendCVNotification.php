@@ -18,11 +18,9 @@ class SendCVNotification implements ShouldQueue
         //
     }
 
-    /**
-     * Execute the job.
-     */
-    public function handle(): void
+     public function handle(): void
     {
         Mail::to($this->employer->email)->send(new CVReceivedMail($this->application));
     }
 }
+                                      

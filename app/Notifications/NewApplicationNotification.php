@@ -13,10 +13,10 @@ class NewApplicationNotification extends Notification
 
     public $application;
 
-    public function __construct()
-    {
-        $this->application = $application;
-    }
+    //public function __construct()
+    //{
+      //  $this->application = $application;
+    //}
 
     public function via(object $notifiable): array
     {

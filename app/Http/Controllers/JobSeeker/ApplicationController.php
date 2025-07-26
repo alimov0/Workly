@@ -20,8 +20,9 @@ class ApplicationController extends Controller
     {
         $this->middleware(['auth:sanctum', 'verified']);
     }
+
     /**
-     * Foydalanuvchining barcha arizalarini ko'rsatish
+     * Foydalanuvchining barcha arizalarini ko‘rsatish
      */
     public function index(Request $request)
     {
@@ -42,28 +43,30 @@ class ApplicationController extends Controller
      */
     public function store(ApplicationRequest $request, Vacancy $vacancy)
     {
+        // Faollik va muddati tekshiriladi
         if (!$vacancy->is_active || $vacancy->deadline < now()) {
             return $this->error(null, 'You cannot apply to this vacancy', 400);
         }
-    
+
+        // Avval ariza topshirganmi
         if ($request->user()->applications()->where('vacancy_id', $vacancy->id)->exists()) {
             return $this->error(null, 'You have already applied to this vacancy', 400);
         }
-    
+
         // Faylni yuklash
         $resumePath = $request->file('resume')->store('resumes', 'public');
-    
-        // Application yaratish (resume faylni shu yerda yozamiz)
+
+        // Application yaratish
         $application = $vacancy->applications()->create([
             'user_id' => $request->user()->id,
             'cover_letter' => $request->cover_letter,
             'resume_file' => $resumePath,
             'status' => 'pending',
         ]);
-    
-        // 📨 Email fon jobini ishga tushiramiz
+
+        // Email fon ishga tushiriladi
         SendApplicationEmail::dispatch($application);
-    
+
         return $this->success(
             new ApplicationResource($application->load(['vacancy'])),
             'Application submitted successfully',
@@ -79,7 +82,9 @@ class ApplicationController extends Controller
         $this->authorize('delete', $application);
 
         // Faylni o‘chirish
-        Storage::disk('public')->delete($application->resume_file);
+        if ($application->resume_file) {
+            Storage::disk('public')->delete($application->resume_file);
+        }
 
         $application->delete();
 

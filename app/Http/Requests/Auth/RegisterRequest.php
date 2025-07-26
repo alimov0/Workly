@@ -2,9 +2,8 @@
 
 namespace App\Http\Requests\Auth;
 
-use Illuminate\Validation\Rule;
-use Illuminate\Validation\Rules\Password;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class RegisterRequest extends FormRequest
 {
@@ -19,32 +18,27 @@ class RegisterRequest extends FormRequest
     /**
      * Get the validation rules that apply to the request.
      *
-     * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
+     * @return array<string, mixed>
      */
     public function rules(): array
     {
         return [
             'name' => 'required|string|max:255',
-            'email' => 'required|string|email|max:255|unique:users',
-            'password' => ['required', 'confirmed', Password::min(8)
-                ->letters()
-                ->mixedCase()
-                ->numbers()
-                ->symbols()
-               ->uncompromised()],
-        
-            'password_confirmation' => 'required|string',
+            'email' => 'required|email|max:255|unique:users',
+            'password' => 'required|string|min:8|confirmed',
             'role' => ['required', Rule::in(['employer', 'user'])],
         ];
     }
+
+    /**
+     * Get custom error messages for validation rules.
+     *
+     * @return array<string, string>
+     */
     public function messages(): array
     {
         return [
-            'password.uncompromised' => 'This password has appeared in a data leak. Please choose a different password.',
             'role.in' => 'Role must be either employer or user',
         ];
     }
-
-
-
 }

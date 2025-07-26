@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Http\Controllers\Admin;
 
 use App\Models\Application;
@@ -32,7 +33,9 @@ class ApplicationController extends Controller
 
         return response()->json([
             'message' => __('Applications retrieved successfully'),
-            'data' => ApplicationResource::collection($query->paginate($request->per_page ?? 15))
-        ]);
-}
+            'data' => ApplicationResource::collection(
+                $query->paginate($request->per_page ?? 15)
+            )
+        ], Response::HTTP_OK);
+    }
 }
