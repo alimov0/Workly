@@ -2,57 +2,54 @@
 
 namespace App\Http\Controllers\Employer;
 
-use App\Http\Controllers\Controller;
-use App\Http\Requests\VacancyRequest;
-use App\Http\Resources\Employer\VacancyResource;
-use App\Http\Resources\Employer\ApplicationResource;
+use Throwable;
 use App\Models\Vacancy;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
+use App\DTO\Employer\VacancyDTO;
+use App\Http\Controllers\Controller;
+use App\Http\Requests\VacancyRequest;
+use Symfony\Component\HttpFoundation\Response;
+use App\Http\Resources\Employer\VacancyResource;
+use App\Http\Resources\Employer\ApplicationResource;
+use App\Interfaces\Services\Employer\VacancyServiceInterface;
 
 class VacancyController extends Controller
 {
+    protected VacancyServiceInterface $service;
+
+    public function __construct(VacancyServiceInterface $service)
+    {
+        $this->service = $service;
+    }
+
     public function index(Request $request)
     {
         try {
-            $vacancies = $request->user()
-                ->vacancies()
-                ->with(['category', 'applications'])
-                ->latest()
-                ->paginate($request->per_page ?? 10);
+            $vacancies = $this->service->listVacancies($request);
 
             return response()->json([
                 'status' => 'success',
-                'message' => 'Vakansiyalar ro‘yxati olindi',
+                'message' => __('Vakansiyalar ro‘yxati olindi'),
                 'data' => VacancyResource::collection($vacancies),
             ]);
-        } catch (\Throwable $e) {
-            return response()->json([
-                'status' => 'error',
-                'message' => 'Vakansiyalarni olishda xatolik yuz berdi.',
-
-            ]);
+        } catch (Throwable $e) {
+            return $this->errorResponse($e, __('Vakansiyalarni olishda xatolik yuz berdi.'));
         }
     }
 
     public function store(VacancyRequest $request)
     {
         try {
-            $vacancy = $request->user()
-                ->vacancies()
-                ->create($request->validated());
+            $dto = VacancyDTO::fromRequest($request);
+            $vacancy = $this->service->create($dto);
 
             return response()->json([
                 'status' => 'success',
-                'message' => 'Vakansiya muvaffaqiyatli yaratildi',
+                'message' => __('Vakansiya muvaffaqiyatli yaratildi'),
                 'data' => new VacancyResource($vacancy->load('category')),
-            ], 201);
-        } catch (\Throwable $e) {
-            return response()->json([
-                'status' => 'error',
-                'message' => 'Vakansiyani yaratishda xatolik yuz berdi.',
-    
             ]);
+        } catch (Throwable $e) {
+            return $this->errorResponse($e, __('Vakansiyani yaratishda xatolik yuz berdi.'));
         }
     }
 
@@ -61,18 +58,16 @@ class VacancyController extends Controller
         try {
             $this->authorize('update', $vacancy);
 
-            $vacancy->update($request->validated());
+            $dto = VacancyDTO::fromRequest($request);
+            $updated = $this->service->update($vacancy, $dto);
 
             return response()->json([
                 'status' => 'success',
-                'message' => 'Vakansiya yangilandi',
-                'data' => new VacancyResource($vacancy->load('category')),
+                'message' => __('Vakansiya yangilandi'),
+                'data' => new VacancyResource($updated->load('category')),
             ]);
-        } catch (\Throwable $e) {
-            return response()->json([
-                'status' => 'error',
-                'message' => 'Vakansiyani yangilashda xatolik yuz berdi.',
-            ]);
+        } catch (Throwable $e) {
+            return $this->errorResponse($e, __('Vakansiyani yangilashda xatolik yuz berdi.'));
         }
     }
 
@@ -81,17 +76,14 @@ class VacancyController extends Controller
         try {
             $this->authorize('delete', $vacancy);
 
-            $vacancy->delete();
+            $this->service->delete($vacancy);
 
             return response()->json([
-                'status' => 'error',
-                'message' => 'Vakansiya o‘chirildi',
-            ], 204);
-        } catch (\Throwable $e) {
-            return response()->json([
-                'status' => 'error',
-                'message' => 'Vakansiyani o‘chirishda xatolik yuz berdi.',
-            ]);
+                'status' => 'success',
+                'message' => __('Vakansiya o‘chirildi'),
+            ], Response::HTTP_NO_CONTENT);
+        } catch (Throwable $e) {
+            return $this->errorResponse($e, __('Vakansiyani o‘chirishda xatolik yuz berdi.'));
         }
     }
 
@@ -100,22 +92,15 @@ class VacancyController extends Controller
         try {
             $this->authorize('view', $vacancy);
 
-            $applications = $vacancy->applications()
-                ->with('user')
-                ->latest()
-                ->paginate();
+            $applications = $this->service->listApplications($vacancy);
 
             return response()->json([
                 'status' => 'success',
-                'message' => 'Arizalar ro‘yxati',
+                'message' => __('Arizalar ro‘yxati'),
                 'data' => ApplicationResource::collection($applications),
             ]);
-        } catch (\Throwable $e) {
-            return response()->json([
-                'status' => 'error',
-                'message' => 'Arizalarni olishda xatolik yuz berdi.',
-            
-            ]);
+        } catch (Throwable $e) {
+            return $this->errorResponse($e, __('Arizalarni olishda xatolik yuz berdi.'));
         }
     }
 
@@ -124,20 +109,27 @@ class VacancyController extends Controller
         try {
             $this->authorize('update', $vacancy);
 
-            $vacancy->update([
-                'is_active' => !$vacancy->is_active
-            ]);
+            $isActive = $this->service->toggleStatus($vacancy);
 
             return response()->json([
                 'status' => 'success',
-                'message' => 'Vakansiya holati yangilandi',
-                'data' => ['is_active' => $vacancy->is_active],
+                'message' => __('Vakansiya holati yangilandi'),
+                'data' => ['is_active' => $isActive],
             ]);
-        } catch (\Throwable $e) {
-            return response()->json([
-                'status' => 'error',
-                'message' => 'Holatni o‘zgartirishda xatolik yuz berdi.',
-            ]);
+        } catch (Throwable $e) {
+            return $this->errorResponse($e, __('Holatni o‘zgartirishda xatolik yuz berdi.'));
         }
+    }
+
+    /**
+     * Exceptionlarni professional qaytarish
+     */
+    protected function errorResponse(Throwable $e, string $message)
+    {
+        return response()->json([
+            'status' => 'error',
+            'message' => $message,
+            'error' => config('app.debug') ? $e->getMessage() : null,
+        ]);
     }
 }

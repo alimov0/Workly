@@ -2,111 +2,79 @@
 
 namespace App\Http\Controllers\JobSeeker;
 
-use App\Http\Controllers\Controller;
-use App\Http\Requests\ApplicationRequest;
-use App\Http\Resources\JobSeeker\ApplicationResource;
-use App\Models\Application;
+use Throwable;
 use App\Models\Vacancy;
+use App\Models\Application;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
-use App\Jobs\SendApplicationEmail;
+use App\Http\Controllers\Controller;
+use App\DTO\JobSeeker\ApplicationDTO;
+use App\Http\Requests\ApplicationRequest;
+use Symfony\Component\HttpFoundation\Response;
+use App\Http\Resources\JobSeeker\ApplicationResource;
+use App\Interfaces\Services\JobSeeker\ApplicationServiceInterface;
 
 class ApplicationController extends Controller
 {
-    /**
-     * Foydalanuvchining barcha arizalarini ko‘rsatish
-     */
+    protected ApplicationServiceInterface $service;
+
+    public function __construct(ApplicationServiceInterface $service)
+    {
+        $this->service = $service;
+    }
+
     public function index(Request $request)
     {
         try {
-            $applications = $request->user()
-                ->applications()
-                ->with(['vacancy', 'vacancy.user'])
-                ->latest()
-                ->paginate();
+            $applications = $this->service->listUserApplications($request);
 
             return response()->json([
                 'status' => 'success',
-                'message' => 'Arizalar muvaffaqiyatli olindi',
+                'message' => __('Arizalar muvaffaqiyatli olindi'),
                 'data' => ApplicationResource::collection($applications)
             ]);
-        } catch (\Throwable $e) {
-            return response()->json([
-                'status' => 'error',
-                'message' => 'Arizalarni olishda xatolik yuz berdi',
-
-            ]);
+        } catch (Throwable $e) {
+            return $this->errorResponse($e, __('Arizalarni olishda xatolik yuz berdi'));
         }
     }
 
-    /**
-     * Yangi ariza yaratish
-     */
     public function store(ApplicationRequest $request, Vacancy $vacancy)
     {
         try {
-            if (!$vacancy->is_active || $vacancy->deadline < now()) {
-                return response()->json([
-                    'status' => 'error',
-                    'message' => 'Bu vakansiyaga ariza topshirib bo‘lmaydi'
-                ], 400);
-            }
-
-            if ($request->user()->applications()->where('vacancy_id', $vacancy->id)->exists()) {
-                return response()->json([
-                 'status' => 'error',
-                    'message' => 'Siz bu vakansiyaga allaqachon ariza topshirgansiz'
-                ], 400);
-            }
-
-            $resumePath = $request->file('resume')->store('resumes', 'public');
-
-            $application = $vacancy->applications()->create([
-                'user_id' => $request->user()->id,
-                'cover_letter' => $request->cover_letter,
-                'resume_file' => $resumePath,
-                'status' => 'pending',
-            ]);
-
-            SendApplicationEmail::dispatch($application);
+            $dto = ApplicationDTO::fromRequest($request);
+            $application = $this->service->store($dto, $vacancy);
 
             return response()->json([
                 'status' => 'success',
-                'message' => 'Ariza muvaffaqiyatli yuborildi',
-                'data' => new ApplicationResource($application->load(['vacancy']))
-            ], 201);
-        } catch (\Throwable $e) {
-            return response()->json([
-                'status' => 'error',
-                'message' => 'Ariza yuborishda xatolik yuz berdi',
-
+                'message' => __('Ariza muvaffaqiyatli yuborildi'),
+                'data' => new ApplicationResource($application->load('vacancy'))
             ]);
+        } catch (Throwable $e) {
+            return $this->errorResponse($e, __('Ariza yuborishda xatolik yuz berdi'));
         }
     }
 
-    /**
-     * Arizani bekor qilish
-     */
     public function destroy(Application $application)
     {
         try {
             $this->authorize('delete', $application);
 
-            if ($application->resume_file) {
-                Storage::disk('public')->delete($application->resume_file);
-            }
-
-            $application->delete();
+            $this->service->delete($application);
 
             return response()->json([
-                'status' => 'error',
-                'message' => 'Ariza bekor qilindi'
-            ], 204);
-        } catch (\Throwable $e) {
-            return response()->json([
-                'status' => 'error',
-                'message' => 'Arizani o‘chirishda xatolik yuz berdi',
+                'status' => 'success',
+                'message' => __('Ariza bekor qilindi')
             ]);
+        } catch (Throwable $e) {
+            return $this->errorResponse($e, __('Arizani o‘chirishda xatolik yuz berdi'));
         }
+    }
+
+    protected function errorResponse(Throwable $e, string $message, int $status = Response::HTTP_INTERNAL_SERVER_ERROR)
+    {
+        return response()->json([
+            'status' => 'error',
+            'message' => $message,
+            'error' => config('app.debug') ? $e->getMessage() : null
+        ], $status);
     }
 }

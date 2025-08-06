@@ -2,135 +2,108 @@
 
 namespace App\Http\Controllers\Admin;
 
+use Throwable;
+use App\DTO\Admin\UserCreateDTO;
+use App\DTO\Admin\UserUpdateDTO;
+use Illuminate\Http\JsonResponse;
 use App\Http\Controllers\Controller;
-use App\Models\User;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Hash;
 use App\Http\Resources\Admin\UserResource;
 use App\Http\Requests\Admin\UserStoreRequest;
 use App\Http\Requests\Admin\UserUpdateRequest;
-use Throwable;
+use Symfony\Component\HttpFoundation\Response;
+use App\Interfaces\Services\Admin\UserServiceInterface;
 
 class UserController extends Controller
 {
+    protected UserServiceInterface $service;
 
-    public function index(Request $request)
+    public function __construct(UserServiceInterface $service)
+    {
+        $this->service = $service;
+    }
+
+    public function index(): JsonResponse
     {
         try {
-            $query = User::query();
-
-            // Qidiruv
-            if ($request->filled('search')) {
-                $search = $request->search;
-                $query->where(function ($q) use ($search) {
-                    $q->where('name', 'like', "%$search%")
-                      ->orWhere('email', 'like', "%$search%");
-                });
-            }
-
-            // Role bo‘yicha filter
-            if ($request->filled('role')) {
-                $query->where('role', $request->role);
-            }
-
-            // Saralash
-            $sortField = $request->input('sort_field', 'created_at');
-            $sortOrder = $request->input('sort_order', 'desc');
-            $query->orderBy($sortField, $sortOrder);
-
-            // Paginatsiya
-            $users = $query->paginate($request->input('per_page', 15));
-
+            $users = $this->service->getAll();
             return response()->json([
                 'status' => 'success',
-                'message' => 'Foydalanuvchilar ro‘yxati',
-                'data'    => UserResource::collection($users)
+                'message' => __('Users retrieved successfully'),
+                'data' => UserResource::collection($users)
             ]);
         } catch (Throwable $e) {
-            return response()->json([
-                'status' => 'error',
-                'message' => 'Foydalanuvchilarni yuklashda xatolik',
-            ], 500);
+            return $this->errorResponse($e, __('Failed to load users'));
         }
     }
 
-    public function store(UserStoreRequest $request)
+    public function store(UserStoreRequest $request): JsonResponse
     {
         try {
-            $data = $request->validated();
-            $data['password'] = Hash::make($data['password']);
-            $data['email_verified_at'] = now();
-
-            $user = User::create($data);
+            $dto = UserCreateDTO::fromRequest($request);
+            $user = $this->service->create($dto);
 
             return response()->json([
                 'status' => 'success',
-                'message' => 'Foydalanuvchi yaratildi',
-                'data'    => new UserResource($user)
-            ], 201);
-        } catch (Throwable $e) {
-            return response()->json([
-                'status' => 'error',
-                'message' => 'Foydalanuvchini yaratishda xatolik',
-            ], 500);
-        }
-    }
-
-    public function show(User $user)
-    {
-        try {
-            return response()->json([
-                'status' => 'success',
-                'message' => 'Foydalanuvchi maʼlumotlari',
-                'data'    => new UserResource($user)
+                'message' => __('User created successfully'),
+                'data' => new UserResource($user)
             ]);
         } catch (Throwable $e) {
-            return response()->json([
-                'status' => 'error',
-                'message' => 'Foydalanuvchini yuklashda xatolik',
-            ], 500);
+            return $this->errorResponse($e, __('Failed to create user'));
         }
     }
 
-    public function update(UserUpdateRequest $request, User $user)
+    public function show(string $id): JsonResponse
     {
         try {
-            $data = $request->validated();
-
-            if ($request->filled('password')) {
-                $data['password'] = Hash::make($data['password']);
-            }
-
-            $user->update($data);
-
+            $user = $this->service->getById($id);
             return response()->json([
                 'status' => 'success',
-                'message' => 'Foydalanuvchi yangilandi',
-                'data'    => new UserResource($user)
+                'message' => __('User detail loaded'),
+                'data' => new UserResource($user)
             ]);
         } catch (Throwable $e) {
-            return response()->json([
-                'status' => 'error',
-                'message' => 'Foydalanuvchini yangilashda xatolik',
-            ], 500);
+            return $this->errorResponse($e, __('Failed to load user'));
         }
     }
 
-    public function destroy(User $user)
+    public function update(UserUpdateRequest $request, string $id): JsonResponse
     {
         try {
-            $user->delete();
+            $dto = UserUpdateDTO::fromRequest($request);
+            $user = $this->service->update($dto, $id);
 
             return response()->json([
                 'status' => 'success',
-                'message' => 'Foydalanuvchi o‘chirildi',
-                'data'    => null
-            ], 204);
+                'message' => __('User updated successfully'),
+                'data' => new UserResource($user)
+            ]);
         } catch (Throwable $e) {
-            return response()->json([
-                'status' => 'error', 
-                'message' => 'Foydalanuvchini o‘chirishda xatolik',
-            ], 500);
+            return $this->errorResponse($e, __('Failed to update user'));
         }
+    }
+
+    public function destroy(string $id): JsonResponse
+    {
+        try {
+            $this->service->delete($id);
+            return response()->json([
+                'status' => 'success',
+                'message' => __('User deleted successfully')
+            ]);
+        } catch (Throwable $e) {
+            return $this->errorResponse($e, __('Failed to delete user'));
+        }
+    }
+
+    /**
+     * Xatoliklarni JSON ko'rinishida qaytarish
+     */
+    protected function errorResponse(Throwable $e, string $message = 'Error'): JsonResponse
+    {
+        return response()->json([
+            'status' => 'error',
+            'message' => $message,
+            'error' => $e->getMessage()
+        ]);
     }
 }

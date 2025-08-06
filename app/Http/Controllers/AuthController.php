@@ -2,93 +2,82 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\User;
-use Illuminate\Http\Request;
-use App\Events\UserRegistered;
+use Throwable;
+use App\DTO\Auth\LoginDTO;
+use App\DTO\Auth\RegisterDTO;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Hash;
-use Illuminate\Auth\Events\Registered;
 use App\Http\Requests\Auth\LoginRequest;
 use App\Http\Requests\Auth\RegisterRequest;
+use App\Interfaces\Services\AuthServiceInterface;
 
 class AuthController extends Controller
 {
+    protected AuthServiceInterface $authService;
+
+    public function __construct(AuthServiceInterface $authService)
+    {
+        $this->authService = $authService;
+    }
+
     public function register(RegisterRequest $request): JsonResponse
     {
-        $validated = $request->validated();
+        try {
+            $dto = RegisterDTO::fromRequest($request);
+            $data = $this->authService->register($dto);
 
-    $user = User::create([
-        'name' => $validated['name'],
-        'email' => $validated['email'],
-        'password' => Hash::make($validated['password']),
-        'role' => $validated['role'],
-    ]);
-
-    // Email tasdiqlash uchun event yuboriladi
-   // event(new Registered($user));
-    event(new UserRegistered($user));
-    // Sanctum token yaratish
-    $token = $user->createToken('auth_token')->plainTextToken;
-
-    // Javobni yig'ish
-    $response = [
-        'message' => 'Registration successful. Please check your email for verification.',
-        'user'    => $user->makeHidden(['password', 'remember_token']),
-        'token'   => $token,
-    ];
-
-    return response()->json($response, 201);
+            return response()->json([
+                'message' => 'Ro‘yxatdan o‘tish muvaffaqiyatli. Emailni tasdiqlang.',
+                'user' => $data['user']->makeHidden(['password', 'remember_token']),
+                'token' => $data['token'],
+            ], 201);
+        } catch (Throwable $e) {
+            return $this->errorResponse($e, 'Ro‘yxatdan o‘tishda xatolik yuz berdi.');
+        }
     }
 
     public function login(LoginRequest $request): JsonResponse
     {
-        $credentials = $request->validated();
+        try {
+            $dto = LoginDTO::fromRequest($request);
+            $data = $this->authService->login($dto);
 
-        // Auth::attempt orqali foydalanuvchini tekshiramiz
-        if (!Auth::attempt($credentials)) {
+            if (!$data) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Login yoki parol noto‘g‘ri.',
+                ], 401);
+            }
+
             return response()->json([
-                'message' => 'Invalid credentials'
-            ], 401);
+                'message' => 'Tizimga muvaffaqiyatli kirildi.',
+                'access_token' => $data['token'],
+                'token_type' => 'Bearer',
+                'user' => $data['user']->makeHidden(['password', 'remember_token']),
+            ]);
+        } catch (Throwable $e) {
+            return $this->errorResponse($e, 'Kirishda xatolik yuz berdi.');
         }
-    
-        // Auth'dan keyin foydalanuvchini olish
-        $user = Auth::user();
-    
-        // Email tasdiqlanganmi?
-        if (!$user->hasVerifiedEmail()) {
-            return response()->json([
-                'message' => 'Email not verified. Please verify your email first.'
-            ], 403);
-        }
-    
-        // Token yaratish
-        $token = $user->createToken('auth_token')->plainTextToken;
-    
-        // Javobni yuborish
-        return response()->json([
-            'message' => 'Successfully Logged In',
-            'access_token' => $token,
-            'token_type' => 'Bearer',
-            'user' => $user->makeHidden(['password', 'remember_token']),
-        ], 200);
     }
 
     public function logout(): JsonResponse
     {
-        $user = Auth::user();
+        try {
+            $this->authService->logout();
 
-    // Barcha tokenlarni o'chirish (agar foydalanuvchi tizimga kirgan bo‘lsa)
-    if ($user) {
-        $user->tokens->each(function ($token) {
-            $token->delete(); // yoki forceDelete() agar tokenlar soft delete bo‘lsa
-        });
+            return response()->json([
+                'message' => 'Tizimdan chiqildi.',
+            ]);
+        } catch (Throwable $e) {
+            return $this->errorResponse($e, 'Tizimdan chiqishda xatolik yuz berdi.');
+        }
     }
 
-    return response()->json([
-        'message' => 'Logged out successfully',
-    ], 200);
+    protected function errorResponse(Throwable $e, string $message, int $status = 500): JsonResponse
+    {
+        return response()->json([
+            'status' => 'error',
+            'message' => $message,
+            'error' => config('app.debug') ? $e->getMessage() : null,
+        ], $status);
     }
-
-
 }

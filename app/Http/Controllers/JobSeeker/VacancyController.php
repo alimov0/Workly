@@ -2,119 +2,91 @@
 
 namespace App\Http\Controllers\JobSeeker;
 
-use App\Http\Controllers\Controller;
-use App\Http\Resources\JobSeeker\VacancyResource;
+use Throwable;
 use App\Models\Vacancy;
 use Illuminate\Http\Request;
+use App\DTO\JobSeeker\VacancyDTO;
+use App\Http\Controllers\Controller;
+use Symfony\Component\HttpFoundation\Response;
+use App\Http\Resources\JobSeeker\VacancyResource;
+use App\Interfaces\Services\JobSeeker\VacancyServiceInterface;
 
 class VacancyController extends Controller
 {
+    protected VacancyServiceInterface $service;
+
+    public function __construct(VacancyServiceInterface $service)
+    {
+        $this->service = $service;
+    }
+
     public function index(Request $request)
     {
         try {
-            $query = Vacancy::query()
-                ->with(['user', 'category'])
-                ->where('is_active', true);
-
-            if ($request->filled('search')) {
-                $query->where(function ($q) use ($request) {
-                    $q->where('title', 'like', '%' . $request->search . '%')
-                      ->orWhere('description', 'like', '%' . $request->search . '%')
-                      ->orWhere('location', 'like', '%' . $request->search . '%');
-                });
-            }
-
-            if ($request->filled('category_id')) {
-                $query->where('category_id', $request->category_id);
-            }
-
-            if ($request->filled('min_salary')) {
-                $query->where('salary_from', '>=', $request->min_salary);
-            }
-
-            if ($request->filled('max_salary')) {
-                $query->where('salary_to', '<=', $request->max_salary);
-            }
-
-            $sortField = $request->get('sort_field', 'created_at');
-            $sortOrder = $request->get('sort_order', 'desc');
-            $query->orderBy($sortField, $sortOrder);
-
-            $vacancies = $query->paginate($request->get('per_page', 15));
+            $vacancies = $this->service->getVacancies($request);
 
             return response()->json([
                 'status' => 'success',
-                'message' => 'Vakansiyalar muvaffaqiyatli olindi.',
+                'message' => __('Vakansiyalar muvaffaqiyatli olindi.'),
                 'data' => VacancyResource::collection($vacancies)
             ]);
-        } catch (\Throwable $e) {
-            return response()->json([
-                'status' => 'error',
-                'message' => 'Vakansiyalarni olishda xatolik yuz berdi.',
-        
-            ], 500);
+        } catch (Throwable $e) {
+            return $this->errorResponse($e, __('Vakansiyalarni olishda xatolik yuz berdi.'));
         }
     }
 
-    public function show($slug)
+    public function show(string $slug)
     {
         try {
-            $vacancy = Vacancy::where('slug', $slug)
-                ->with(['user', 'category'])
-                ->where('is_active', true)
-                ->first();
-
-            if (!$vacancy) {
-                return response()->json([
-                    'status' => 'success',
-                    'message' => 'Vakansiya topilmadi.'
-                ], 404);
-            }
-
-            return response()->json([
-                'status' => 'success',
-                'message' => 'Vakansiya maʼlumotlari muvaffaqiyatli olindi.',
-                'data' => new VacancyResource($vacancy)
-            ]);
-        } catch (\Throwable $e) {
-            return response()->json([
-                'status' => 'error',
-                'message' => 'Vakansiyani ko‘rishda xatolik yuz berdi.',
-            ], 500);
-        }
-    }
-
-    public function apply($id, Request $request)
-    {
-        try {
-            $user = $request->user();
-
-            $vacancy = Vacancy::find($id);
+            $vacancy = $this->service->getVacancyBySlug($slug);
 
             if (!$vacancy) {
                 return response()->json([
                     'status' => 'error',
-                    'message' => 'Vakansiya topilmadi.'
-                ], 404);
+                    'message' => __('Vakansiya topilmadi.')
+                ], Response::HTTP_NOT_FOUND);
             }
-
-            $application = $vacancy->applications()->create([
-                'user_id' => $user->id,
-                'cover_letter' => $request->input('cover_letter'),
-                // Fayl yuklash bo‘lsa, bu yerga logika qo‘shish mumkin
-            ]);
 
             return response()->json([
                 'status' => 'success',
-                'message' => 'Ariza muvaffaqiyatli yuborildi.',
-                'data' => $application
-            ], 201);
-        } catch (\Throwable $e) {
-            return response()->json([
-                'status' => 'error',
-                'message' => 'Ariza yuborishda xatolik yuz berdi.',
-            
-            ], 500);
+                'message' => __('Vakansiya maʼlumotlari muvaffaqiyatli olindi.'),
+                'data' => new VacancyResource($vacancy)
+            ]);
+        } catch (Throwable $e) {
+            return $this->errorResponse($e, __('Vakansiyani ko‘rishda xatolik yuz berdi.'));
         }
+    }
+
+    public function apply(int $id, Request $request)
+    {
+        try {
+            $dto = VacancyDTO::fromRequest($request);
+
+            $application = $this->service->ToVacancy($id, $dto);
+
+            if (!$application) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => __('Vakansiya topilmadi.')
+                ], Response::HTTP_NOT_FOUND);
+            }
+
+            return response()->json([
+                'status' => 'success',
+                'message' => __('Ariza muvaffaqiyatli yuborildi.'),
+                'data' => $application
+            ], Response::HTTP_CREATED);
+        } catch (Throwable $e) {
+            return $this->errorResponse($e, __('Ariza yuborishda xatolik yuz berdi.'));
+        }
+    }
+
+    protected function errorResponse(Throwable $e, string $message, int $status = Response::HTTP_INTERNAL_SERVER_ERROR)
+    {
+        return response()->json([
+            'status' => 'error',
+            'message' => $message,
+            'error' => config('app.debug') ? $e->getMessage() : null
+        ], $status);
     }
 }

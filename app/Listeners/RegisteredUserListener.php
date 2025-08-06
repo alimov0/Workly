@@ -4,6 +4,7 @@ namespace App\Listeners;
 
 use App\Mail\SendEmail;
 use App\Events\UserRegistered;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Contracts\Queue\ShouldQueue;
 

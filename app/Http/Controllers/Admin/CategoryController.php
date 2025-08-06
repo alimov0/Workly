@@ -2,127 +2,132 @@
 
 namespace App\Http\Controllers\Admin;
 
-use App\Models\Category;
 use Illuminate\Http\Request;
+use App\DTO\Admin\CategoryDTO;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\Admin\CategoryResource;
+use Symfony\Component\HttpFoundation\Response;
 use App\Http\Requests\Admin\CategoryStoreRequest;
 use App\Http\Requests\Admin\CategoryUpdateRequest;
-use Illuminate\Support\Facades\Log;
+use App\Interfaces\Services\Admin\CategoryServiceInterface;
 
 class CategoryController extends Controller
 {
+    protected CategoryServiceInterface $categoryService;
 
+    public function __construct(CategoryServiceInterface $categoryService)
+    {
+        $this->categoryService = $categoryService;
+    }
+
+    /**
+     * Barcha kategoriyalarni olish
+     */
     public function index(Request $request)
     {
         try {
-            $query = Category::with(['parent', 'children']);
-
-            if ($request->filled('search')) {
-                $query->where('title', 'like', '%' . $request->search . '%');
-            }
-
-            if ($request->filled('parent_id')) {
-                $query->where('parent_id', $request->parent_id);
-            }
-
-            $categories = $query->paginate($request->per_page ?? 15);
+            $categories = $this->categoryService->getAll($request);
 
             return response()->json([
                 'status' => 'success',
                 'message' => __('Categories retrieved successfully'),
-                'data'    => CategoryResource::collection($categories),
-            ], 200);
-
+                'data' => CategoryResource::collection($categories)
+            ]);
         } catch (\Throwable $e) {
-        
             return response()->json([
                 'status' => 'error',
-                'message' => __('Failed to retrieve categories'),
-            ], 500);
+                'message' => __('Failed to load categories'),
+                'error' => $e->getMessage()
+            ]);
         }
     }
 
+    /**
+     * Yangi kategoriya yaratish
+     */
     public function store(CategoryStoreRequest $request)
     {
         try {
-            $category = Category::create($request->validated());
+            $dto = CategoryDTO::fromRequest($request);
+            $category = $this->categoryService->store($dto);
 
             return response()->json([
                 'status' => 'success',
                 'message' => __('Category created successfully'),
-                'data'    => new CategoryResource($category->load(['parent', 'children']))
-            ], 201);
-
+                'data' => new CategoryResource($category)
+            ]);
         } catch (\Throwable $e) {
-
             return response()->json([
                 'status' => 'error',
                 'message' => __('Failed to create category'),
-            ], 500);
+                'error' => $e->getMessage()
+            ]);
         }
     }
 
-    public function show(Category $category)
+    /**
+     * Bitta kategoriyani ko‘rish
+     */
+    public function show($id)
     {
         try {
+            $category = $this->categoryService->show($id);
+
             return response()->json([
                 'status' => 'success',
-                'message' => __('Category retrieved successfully'),
-                'data'    => new CategoryResource($category->load(['parent', 'children']))
-            ], 200);
-
+                'message' => __('Category details retrieved'),
+                'data' => new CategoryResource($category)
+            ]);
         } catch (\Throwable $e) {
             return response()->json([
                 'status' => 'error',
-                'message' => __('Failed to retrieve category'),
-            ], 500);
+                'message' => __('Failed to load category'),
+                'error' => $e->getMessage()
+            ]);
         }
     }
 
-    public function update(CategoryUpdateRequest $request, Category $category)
+    /**
+     * Kategoriya yangilash
+     */
+    public function update(CategoryUpdateRequest $request, $id)
     {
         try {
-            $category->update($request->validated());
+            $dto = CategoryDTO::fromRequest($request);
+            $category = $this->categoryService->update($dto, $id);
 
             return response()->json([
                 'status' => 'success',
                 'message' => __('Category updated successfully'),
-                'data'    => new CategoryResource($category->load(['parent', 'children']))
-            ], 200);
-
+                'data' => new CategoryResource($category)
+            ]);
         } catch (\Throwable $e) {
-            
             return response()->json([
                 'status' => 'error',
                 'message' => __('Failed to update category'),
-            ], 500);
+                'error' => $e->getMessage()
+            ]);
         }
     }
 
-    public function destroy(Category $category)
+    /**
+     * Kategoriya o‘chirish
+     */
+    public function destroy($id)
     {
         try {
-            if ($category->vacancies()->exists()) {
-                return response()->json([
-                    'status' => 'error',
-                    'message' => __('Cannot delete category with active vacancies'),
-                ], 422);
-            }
-
-            $category->delete();
+            $this->categoryService->delete($id);
 
             return response()->json([
-                'status' => 'error',
+                'status' => 'success',
                 'message' => __('Category deleted successfully')
-            ], 200);
-
+            ]);
         } catch (\Throwable $e) {
-        
             return response()->json([
                 'status' => 'error',
                 'message' => __('Failed to delete category'),
-            ], 500);
+                'error' => $e->getMessage()
+            ]);
         }
     }
 }

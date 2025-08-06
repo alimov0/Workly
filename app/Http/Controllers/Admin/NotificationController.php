@@ -2,43 +2,27 @@
 
 namespace App\Http\Controllers\Admin;
 
+use Exception;
+use Illuminate\Http\JsonResponse;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\MarkNotificationAsReadRequest;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Http\JsonResponse;
-use Exception;
+use App\Interfaces\Services\Admin\NotificationServiceInterface;
+use App\DTO\Admin\NotificationDTO;
 
 class NotificationController extends Controller
 {
+    protected NotificationServiceInterface $notificationService;
+
+    public function __construct(NotificationServiceInterface $notificationService)
+    {
+        $this->notificationService = $notificationService;
+    }
+
     public function markAsRead(MarkNotificationAsReadRequest $request): JsonResponse
     {
         try {
-            $user = Auth::user();
-
-            if ($request->input('all')) {
-                $user->unreadNotifications->markAsRead();
-
-                return response()->json([
-                    'status' => 'error',
-                    'message' => __('All notifications marked as read'),
-                ]);
-            }
-
-            if ($request->has('notification_ids')) {
-                $count = $user->unreadNotifications()
-                    ->whereIn('id', $request->notification_ids)
-                    ->update(['read_at' => now()]);
-
-                return response()->json([
-                    'status' => 'error',
-                    'message' => __(':count notifications marked as read', ['count' => $count]),
-                ]);
-            }
-
-            return response()->json([
-                'status' => 'error',
-                'message' => __('No notification IDs or "all" parameter provided'),
-            ], 422);
+            $dto = new NotificationDTO($request->validated());
+            return $this->notificationService->markAsRead($dto);
         } catch (Exception $e) {
             return response()->json([
                 'status' => 'error',
