@@ -3,27 +3,35 @@
 namespace App\Repositories\Admin;
 
 use App\Models\Application;
-use App\DTO\Admin\ApplicationDTO;
 use App\Interfaces\Admin\ApplicationRepositoryInterface;
 
 class ApplicationRepository implements ApplicationRepositoryInterface
 {
-    public function getAllApplications(ApplicationDTO $dto)
+    public function paginate(int $perPage = 10)
     {
-        $query = Application::with(['user', 'vacancy']);
+        return Application::paginate($perPage);
+    }
 
-        if ($dto->status) {
-            $query->where('status', $dto->status);
-        }
+    public function find(int $id): Application
+    {
+        return Application::findOrFail($id);
+    }
 
-        if ($dto->user_id) {
-            $query->where('user_id', $dto->user_id);
-        }
+    public function create(array $data): Application
+    {
+        return Application::create($data);
+    }
 
-        if ($dto->vacancy_id) {
-            $query->where('vacancy_id', $dto->vacancy_id);
-        }
+    public function update(int $id, array $data): Application
+    {
+        $application = $this->find($id);
+        $application->update($data);
+        return $application;
+    }
 
-        return $query->paginate($dto->per_page ?? 15);
+    public function delete(int $id): bool
+    {
+        $application = $this->find($id);
+        return $application->delete();
     }
 }

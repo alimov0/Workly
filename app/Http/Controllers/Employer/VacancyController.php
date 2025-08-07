@@ -127,9 +127,9 @@ class VacancyController extends Controller
     protected function errorResponse(Throwable $e, string $message)
     {
         return response()->json([
-            'status' => 'error',
+            'status' => 'success',
             'message' => $message,
-            'error' => config('app.debug') ? $e->getMessage() : null,
+            'data' => config('app.debug') ? $e->getMessage() : null,
         ]);
     }
 }

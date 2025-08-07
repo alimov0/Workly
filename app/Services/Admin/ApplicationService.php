@@ -2,55 +2,40 @@
 
 namespace App\Services\Admin;
 
-use App\Models\Application;
-use Illuminate\Http\Request;
-use App\DTO\Admin\ApplicationDTO;
 use App\Interfaces\Admin\ApplicationRepositoryInterface;
 use App\Services\Admin\Interfaces\ApplicationServiceInterface;
 
 class ApplicationService implements ApplicationServiceInterface
 {
-    protected $applicationRepository;
+    protected ApplicationRepositoryInterface $applicationRepository;
 
     public function __construct(ApplicationRepositoryInterface $applicationRepository)
-    {
+    { 
         $this->applicationRepository = $applicationRepository;
     }
 
-    public function getAllApplications(ApplicationDTO $dto)
+    public function listPaginated(int $perPage = 10)
     {
-        return $this->applicationRepository->getAllApplications($dto);
-   
-    }
-    public function index(Request $request)
-    {
-        return Application::paginate(10);
+        return $this->applicationRepository->paginate($perPage);
     }
 
-    public function show($id)
+    public function show(int $id)
     {
-        return Application::findOrFail($id);
+        return $this->applicationRepository->find($id);
     }
 
     public function store(array $data)
     {
-        return Application::create($data);
+        return $this->applicationRepository->create($data);
     }
 
-    public function update($id, array $data)
+    public function update(int $id, array $data)
     {
-        $application = Application::findOrFail($id);
-        $application->update($data);
-        return $application;
+        return $this->applicationRepository->update($id, $data);
     }
 
-    public function destroy($id)
+    public function destroy(int $id)
     {
-        $application = Application::findOrFail($id);
-        $application->delete();
-        return true;
+        return $this->applicationRepository->delete($id);
     }
-
-
-
 }

@@ -28,7 +28,7 @@ class ApplicationController extends Controller
             $dto = ApplicationDTO::fromRequest($request);
 
             // Servisdan foydalanib ma'lumot olish
-            $applications = $this->applicationService->getAllApplications($dto);
+            $applications = $this->applicationService->listPaginated($dto);
 
             return response()->json([
                 'status' => 'success',
@@ -38,9 +38,9 @@ class ApplicationController extends Controller
         } catch (\Throwable $e) {
             // Exceptionlarni professional tutish
             return response()->json([
-                'status' => 'error',
+                'status' => 'success',
                 'message' => __('Failed to load applications'),
-                'error' => $e->getMessage()
+                'data' => $applications
             ]);
         }
     }

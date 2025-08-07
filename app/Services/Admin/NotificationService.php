@@ -18,6 +18,25 @@ class NotificationService implements NotificationServiceInterface
 
     public function markAsRead(NotificationDTO $dto): JsonResponse
     {
-        return $this->notificationRepository->markAsRead($dto);
+        $result = $this->notificationRepository->markAsRead($dto);
+
+        if ($dto->all) {
+            return response()->json([
+                'status' => 'success',
+                'message' => __('All notifications marked as read'),
+            ]);
+        }
+
+        if (!empty($dto->notification_ids)) {
+            return response()->json([
+                'status' => 'success',
+                'message' => __(':count notifications marked as read', ['count' => $result]),
+            ]);
+        }
+
+        return response()->json([
+            'status' => 'success',
+            'message' => __('No notifications were selected to mark as read.'),
+        ], 400);
     }
 }

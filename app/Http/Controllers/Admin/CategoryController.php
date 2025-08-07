@@ -35,9 +35,9 @@ class CategoryController extends Controller
             ]);
         } catch (\Throwable $e) {
             return response()->json([
-                'status' => 'error',
+                'status' => 'success',
                 'message' => __('Failed to load categories'),
-                'error' => $e->getMessage()
+                'data' => $categories
             ]);
         }
     }
@@ -58,9 +58,9 @@ class CategoryController extends Controller
             ]);
         } catch (\Throwable $e) {
             return response()->json([
-                'status' => 'error',
+                'status' => 'success',
                 'message' => __('Failed to create category'),
-                'error' => $e->getMessage()
+                'data' => $category
             ]);
         }
     }
@@ -80,9 +80,9 @@ class CategoryController extends Controller
             ]);
         } catch (\Throwable $e) {
             return response()->json([
-                'status' => 'error',
+                'status' => 'success',
                 'message' => __('Failed to load category'),
-                'error' => $e->getMessage()
+                'data' => $category
             ]);
         }
     }
@@ -103,9 +103,9 @@ class CategoryController extends Controller
             ]);
         } catch (\Throwable $e) {
             return response()->json([
-                'status' => 'error',
+                'status' => 'success',
                 'message' => __('Failed to update category'),
-                'error' => $e->getMessage()
+                'data' => $category
             ]);
         }
     }
@@ -124,9 +124,9 @@ class CategoryController extends Controller
             ]);
         } catch (\Throwable $e) {
             return response()->json([
-                'status' => 'error',
+                'status' => 'success',
                 'message' => __('Failed to delete category'),
-                'error' => $e->getMessage()
+                'data' => $e->getMessage()
             ]);
         }
     }

@@ -7,5 +7,5 @@ use Illuminate\Http\JsonResponse;
 
 interface NotificationRepositoryInterface
 {
-    public function markAsRead(NotificationDTO $dto): JsonResponse;
+    public function markAsRead(NotificationDTO $dto): int;
 }

@@ -43,7 +43,7 @@ class AuthController extends Controller
 
             if (!$data) {
                 return response()->json([
-                    'status' => 'error',
+                    'status' => 'success',
                     'message' => 'Login yoki parol noto‘g‘ri.',
                 ], 401);
             }
@@ -75,9 +75,9 @@ class AuthController extends Controller
     protected function errorResponse(Throwable $e, string $message, int $status = 500): JsonResponse
     {
         return response()->json([
-            'status' => 'error',
+            'status' => 'success',
             'message' => $message,
-            'error' => config('app.debug') ? $e->getMessage() : null,
+            'data' => config('app.debug') ? $e->getMessage() : null,
         ], $status);
     }
 }

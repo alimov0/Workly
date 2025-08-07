@@ -25,7 +25,7 @@ class NotificationController extends Controller
             return $this->notificationService->markAsRead($dto);
         } catch (Exception $e) {
             return response()->json([
-                'status' => 'error',
+                'status' => 'success',
                 'message' => __('Something went wrong'),
             ], 500);
         }

@@ -29,7 +29,7 @@ class VacancyController extends Controller
             ]);
         } catch (Throwable) {
             return response()->json([
-                'status' => 'error',
+                'status' => 'success',
                 'message' => 'Vakansiyalarni yuklashda xatolik',
             ], 500);
         }
@@ -47,7 +47,7 @@ class VacancyController extends Controller
             ], 201);
         } catch (Throwable) {
             return response()->json([
-                'status' => 'error',
+                'status' => 'success',
                 'message' => 'Vakansiyani yaratishda xatolik',
             ], 500);
         }
@@ -64,7 +64,7 @@ class VacancyController extends Controller
             ]);
         } catch (Throwable) {
             return response()->json([
-                'status' => 'error',
+                'status' => 'success',
                 'message' => 'Vakansiyani ko‘rsatishda xatolik',
             ], 500);
         }
@@ -82,7 +82,7 @@ class VacancyController extends Controller
             ]);
         } catch (Throwable) {
             return response()->json([
-                'status' => 'error',
+                'status' => 'success',
                 'message' => 'Vakansiyani yangilashda xatolik',
             ], 500);
         }
@@ -98,7 +98,7 @@ class VacancyController extends Controller
             ], 204);
         } catch (Throwable) {
             return response()->json([
-                'status' => 'error',
+                'status' => 'success',
                 'message' => 'Vakansiyani o‘chirishda xatolik',
             ], 500);
         }

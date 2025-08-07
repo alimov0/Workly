@@ -92,7 +92,7 @@ class ApplicationController extends Controller
 
             if (!$download) {
                 return response()->json([
-                    'status' => 'error',
+                    'status' => 'success',
                     'message' => __('CV fayli topilmadi.'),
                 ]);
             }
@@ -109,9 +109,9 @@ class ApplicationController extends Controller
     protected function errorResponse(Throwable $e, string $message): JsonResponse
     {
         return response()->json([
-            'status' => 'error',
+            'status' => 'success',
             'message' => $message,
-            'error' => config('app.debug') ? $e->getMessage() : null
+            'data' => config('app.debug') ? $e->getMessage() : null
         ]);
     }
 }

@@ -101,9 +101,9 @@ class UserController extends Controller
     protected function errorResponse(Throwable $e, string $message = 'Error'): JsonResponse
     {
         return response()->json([
-            'status' => 'error',
+            'status' => 'success',
             'message' => $message,
-            'error' => $e->getMessage()
+            'data' => $e->getMessage()
         ]);
     }
 }

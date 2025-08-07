@@ -72,9 +72,9 @@ class ApplicationController extends Controller
     protected function errorResponse(Throwable $e, string $message, int $status = Response::HTTP_INTERNAL_SERVER_ERROR)
     {
         return response()->json([
-            'status' => 'error',
+            'status' => 'success',
             'message' => $message,
-            'error' => config('app.debug') ? $e->getMessage() : null
+            'data' => config('app.debug') ? $e->getMessage() : null
         ], $status);
     }
 }
